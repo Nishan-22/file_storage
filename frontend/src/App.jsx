@@ -40,6 +40,15 @@ export default function App() {
     setStatus("Reading Blockchain Database...");
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Check we are on Sepolia (chainId 11155111)
+      const network = await provider.getNetwork();
+      if (network.chainId !== 11155111n) {
+        setStatus("Wrong Network! Please switch MetaMask to Sepolia (chain " + network.chainId.toString() + " detected)");
+        setLoading(false);
+        return;
+      }
+
       const contract = getContract(provider);
       const count = await contract.tokenCounter();
       const fetchedFiles = [];
@@ -63,7 +72,7 @@ export default function App() {
       setStatus("");
     } catch (error) {
       console.error("Error loading files:", error);
-      setStatus("Error: Check Contract Address");
+      setStatus("Error: " + (error.reason || error.message || "Check Contract Address"));
     } finally {
       setLoading(false);
     }
@@ -74,6 +83,30 @@ export default function App() {
       loadFiles();
     }
   }, [account]);
+
+  useEffect(() => {
+    if (window.ethereum) {
+      const handleAccountsChanged = (accounts) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        } else {
+          setAccount("");
+        }
+      };
+
+      const handleChainChanged = () => {
+        window.location.reload();
+      };
+
+      window.ethereum.on("accountsChanged", handleAccountsChanged);
+      window.ethereum.on("chainChanged", handleChainChanged);
+
+      return () => {
+        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+        window.ethereum.removeListener("chainChanged", handleChainChanged);
+      };
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -86,7 +119,7 @@ export default function App() {
   const uploadToPinata = async () => {
     if (!selectedFile) return null;
     if (PINATA_JWT === "YOUR_PINATA_JWT_HERE" || !PINATA_JWT) {
-      alert("Please configure VITE_PINATA_JWT in your frontend/.env file");
+      alert("Pinata JWT is not configured. Please check VITE_PINATA_JWT in your frontend/.env file and restart your Vite server.");
       return null;
     }
 
@@ -106,6 +139,7 @@ export default function App() {
     } catch (error) {
       console.error("Pinata error:", error);
       setStatus("IPFS Upload Failed");
+      alert("IPFS Upload Failed: " + (error.response?.data?.error || error.message) + ". Make sure you restarted the Vite server after configuring your .env file.");
       return null;
     }
   };
@@ -113,6 +147,10 @@ export default function App() {
   async function handleForge() {
     if (!selectedFile) {
       alert("Please select a file first");
+      return;
+    }
+    if (!CONTRACT_ADDRESS) {
+      alert("Contract address is not configured. Please check VITE_CONTRACT_ADDRESS in your frontend/.env file and restart your Vite server.");
       return;
     }
 
@@ -263,7 +301,7 @@ export default function App() {
                       </div>
                       <div className="flex gap-3 w-full md:w-auto">
                         <a
-                          href={"https://ipfs.io/ipfs/" + file.cid}
+                          href={"https://gateway.pinata.cloud/ipfs/" + file.cid}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 md:flex-none text-center bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/50 px-6 py-2 rounded-xl text-xs font-bold transition-all"
