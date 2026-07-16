@@ -1,0 +1,12 @@
+{
+  "name": "file-storage-subgraph",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "graph build",
+    "deploy": "graph deploy --studio file-storage"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.96.0",
+    "@graphprotocol/graph-ts": "^0.35.1"
+  }
+}

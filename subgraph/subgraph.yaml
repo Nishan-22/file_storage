@@ -1,0 +1,25 @@
+specVersion: 1.2.0
+description: FileStorageNFT subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: FileStorageNFT
+    network: sepolia
+    source:
+      address: "0x524d8370c97ECe2e03F243c3D2e9682728E8D913"
+      abi: FileStorageNFT
+      # startBlock: 11284300
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - FileEntity  
+      abis:
+        - name: FileStorageNFT
+          file: ./abis/FileStorageNFT.json
+      eventHandlers:
+        - event: FileUploaded(indexed uint256,indexed address,string,string)
+          handler: handleFileUploaded 
+      file: ./src/mapping.ts

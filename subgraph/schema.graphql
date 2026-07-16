@@ -1,0 +1,7 @@
+type FileEntity @entity(immutable: true) {
+  id: ID!
+  tokenId: BigInt!
+  uploader: Bytes!
+  cid: String!
+  fileName: String!
+}

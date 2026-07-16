@@ -6,6 +6,7 @@ import fileStorageABI from "./abi/FileStorageNFT.json";
 // These are pulled from the .env file
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 const PINATA_JWT = import.meta.env.VITE_PINATA_JWT;
+const SUBGRAPH_URL = import.meta.env.VITE_SUBGRAPH_URL;
 
 export default function App() {
   const [account, setAccount] = useState("");
@@ -50,25 +51,35 @@ export default function App() {
       }
 
       const contract = getContract(provider);
-      const count = await contract.tokenCounter();
-      const fetchedFiles = [];
-      
-      // We loop through the blockchain mapping (our database)
-      for (let i = 0; i < Number(count); i++) {
-        try {
-          const file = await contract.getFile(i);
-          fetchedFiles.push({
-            id: i,
-            cid: file.cid,
-            fileName: file.fileName,
-            uploader: file.uploader,
-            timestamp: new Date(Number(file.timestamp) * 1000).toLocaleString()
-          });
-        } catch (err) {
-          console.error("Error fetching file " + i + ":", err);
+
+      let fetchedFiles;
+      if (SUBGRAPH_URL) {
+        const query = `{ fileEntities(orderBy: tokenId, orderDirection: desc) { tokenId uploader cid fileName } }`;
+        const res = await axios.post(SUBGRAPH_URL, { query });
+        fetchedFiles = res.data.data.fileEntities.map((f) => ({
+          id: Number(f.tokenId),
+          cid: f.cid,
+          fileName: f.fileName,
+          uploader: f.uploader,
+        }));
+      } else {
+        const filter = contract.filters.FileUploaded();
+        const latestBlock = await provider.getBlockNumber();
+        const CHUNK_SIZE = 10000;
+        const eventChunks = [];
+        for (let from = 0; from <= latestBlock; from += CHUNK_SIZE) {
+          const to = Math.min(from + CHUNK_SIZE - 1, latestBlock);
+          const chunk = await contract.queryFilter(filter, from, to);
+          eventChunks.push(...chunk);
         }
+        fetchedFiles = eventChunks.map((event) => ({
+          id: Number(event.args.tokenId),
+          cid: event.args.cid,
+          fileName: event.args.fileName,
+          uploader: event.args.uploader,
+        })).reverse();
       }
-      setFiles(fetchedFiles.reverse());
+      setFiles(fetchedFiles);
       setStatus("");
     } catch (error) {
       console.error("Error loading files:", error);

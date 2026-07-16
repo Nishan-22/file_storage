@@ -1,24 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract FileStorageNFT is ERC721 {
+contract FileStorageNFT is ERC721, Ownable {
 
     uint256 public tokenCounter;
 
-    constructor() ERC721("FileStorageNFT", "FSNFT") {}
+    constructor()
+        ERC721("FileStorageNFT", "FSNFT")
+        Ownable(msg.sender)
+    {}
+
+    error EmptyCID();
+    error EmptyFileName();
+    error FileAlreadyUploaded();
+    error FileDoesNotExist();
 
     struct FileData {
-        string cid;        // IPFS hash
-        string fileName;   // original file name
-        address uploader;  // owner
+        string cid;
+        string fileName;
+        address uploader;
         uint256 timestamp;
     }
 
+    // mapping(uint256 => FileData) private files;
 
-
-    mapping(uint256 => FileData) public files;
+    mapping(string => bool) private uploadedCID;
 
     event FileUploaded(
         uint256 indexed tokenId,
@@ -27,34 +36,58 @@ contract FileStorageNFT is ERC721 {
         string fileName
     );
 
-    // Mint NFT + store file metadata
-    function uploadFile(string memory _cid, string memory _fileName) public returns (uint256) {
+    function uploadFile(
+        string calldata _cid,
+        string calldata _fileName
+    )
+        external
+        returns (uint256 tokenId)
+    {
+        if (bytes(_cid).length == 0)
+            revert EmptyCID();
 
-        uint256 tokenId = tokenCounter;
+        if (bytes(_fileName).length == 0)
+            revert EmptyFileName();
+
+        if (uploadedCID[_cid])
+            revert FileAlreadyUploaded();
+
+        tokenId = tokenCounter;
 
         _safeMint(msg.sender, tokenId);
 
-        files[tokenId] = FileData({
-            cid: _cid,
-            fileName: _fileName,
-            uploader: msg.sender,
-            timestamp: block.timestamp
-        });
+    
+        uploadedCID[_cid] = true;
 
-        emit FileUploaded(tokenId, msg.sender, _cid, _fileName);
+        emit FileUploaded(
+            tokenId,
+            msg.sender,
+            _cid,
+            _fileName
+        );
 
-        tokenCounter++;
-
-        return tokenId;
+        unchecked {
+            tokenCounter++;
+        }
     }
 
-    // Get file details
-    function getFile(uint256 tokenId) public view returns (FileData memory) {
-        return files[tokenId];
-    }
+    // function getFile(
+    //     uint256 tokenId
+    // )
+    //     external
+    //     view
+    //     returns (FileData memory)
+    // {
+    //     if (_ownerOf(tokenId) == address(0))
+    //         revert FileDoesNotExist();
 
-    // Check if user owns file NFT
-    function isOwner(uint256 tokenId, address user) public view returns (bool) {
-        return ownerOf(tokenId) == user;
+    //     return files[tokenId];
+    // }
+
+    function isCIDUsed(string calldata _cid) external view returns (bool) {
+        return uploadedCID[_cid];
     }
+    
+
+  
 }

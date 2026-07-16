@@ -87,6 +87,25 @@
     },
     {
       "type": "function",
+      "name": "isCIDUsed",
+      "inputs": [
+        {
+          "name": "_cid",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "name",
       "inputs": [],
       "outputs": [
@@ -94,6 +113,19 @@
           "name": "",
           "type": "string",
           "internalType": "string"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
         }
       ],
       "stateMutability": "view"
@@ -116,6 +148,13 @@
         }
       ],
       "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "renounceOwnership",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
     },
     {
       "type": "function",
@@ -275,6 +314,19 @@
     },
     {
       "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "uploadFile",
       "inputs": [
         {
@@ -290,7 +342,7 @@
       ],
       "outputs": [
         {
-          "name": "",
+          "name": "tokenId",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -374,6 +426,25 @@
           "type": "string",
           "indexed": false,
           "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
         }
       ],
       "anonymous": false
@@ -503,6 +574,48 @@
           "name": "tokenId",
           "type": "uint256",
           "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "EmptyCID",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "EmptyFileName",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "FileAlreadyUploaded",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "FileDoesNotExist",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OwnableInvalidOwner",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableUnauthorizedAccount",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
         }
       ]
     }
