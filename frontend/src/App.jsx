@@ -36,23 +36,12 @@ export default function App() {
   };
 
   async function loadFiles() {
-    if (!window.ethereum || !account || !CONTRACT_ADDRESS) return;
+    if (!CONTRACT_ADDRESS) return;
     setLoading(true);
     setStatus("Reading Blockchain Database...");
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-
-      // Check we are on Sepolia (chainId 11155111)
-      const network = await provider.getNetwork();
-      if (network.chainId !== 11155111n) {
-        setStatus("Wrong Network! Please switch MetaMask to Sepolia (chain " + network.chainId.toString() + " detected)");
-        setLoading(false);
-        return;
-      }
-
-      const contract = getContract(provider);
-
       let fetchedFiles;
+
       if (SUBGRAPH_URL) {
         const query = `{ fileEntities(orderBy: tokenId, orderDirection: desc) { tokenId uploader cid fileName } }`;
         const res = await axios.post(SUBGRAPH_URL, { query });
@@ -63,6 +52,11 @@ export default function App() {
           uploader: f.uploader,
         }));
       } else {
+        const provider = window.ethereum
+          ? new ethers.BrowserProvider(window.ethereum)
+          : new ethers.JsonRpcProvider("https://rpc.sepolia.org");
+
+        const contract = getContract(provider);
         const filter = contract.filters.FileUploaded();
         const latestBlock = await provider.getBlockNumber();
         const CHUNK_SIZE = 10000;
@@ -90,9 +84,11 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (account) {
-      loadFiles();
-    }
+    loadFiles();
+  }, []);
+
+  useEffect(() => {
+    if (account) loadFiles();
   }, [account]);
 
   useEffect(() => {
@@ -272,61 +268,61 @@ export default function App() {
                 </button>
               </div>
             </div>
-
-            {/* Vault List */}
-            <div className="bg-slate-900 p-8 rounded-3xl border border-slate-700 shadow-2xl">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <span className="w-2 h-8 bg-cyan-500 rounded-full"></span>
-                  Vault Contents
-                </h2>
-                <button 
-                  onClick={loadFiles} 
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-all border border-slate-700"
-                >
-                  REFRESH
-                </button>
-              </div>
-              
-              {loading ? (
-                <div className="text-center py-20">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-                  <p className="text-slate-500 font-medium tracking-widest text-xs uppercase">Reading Distributed Ledger...</p>
-                </div>
-              ) : files.length === 0 ? (
-                <div className="text-center py-20 bg-slate-800/20 rounded-3xl border-2 border-dashed border-slate-800">
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No assets found on this contract.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {files.map((file) => (
-                    <div key={file.id} className="group bg-slate-800/30 hover:bg-slate-800/60 p-6 rounded-2xl border border-slate-800 hover:border-slate-600 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] bg-slate-700 text-slate-400 px-2 py-0.5 rounded font-mono font-bold">ID #{file.id}</span>
-                          <h3 className="text-lg font-bold text-white">{file.fileName}</h3>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-mono break-all leading-tight">
-                          CID: <span className="text-cyan-500/60">{file.cid}</span>
-                        </p>
-                      </div>
-                      <div className="flex gap-3 w-full md:w-auto">
-                        <a
-                          href={"https://gateway.pinata.cloud/ipfs/" + file.cid}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 md:flex-none text-center bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/50 px-6 py-2 rounded-xl text-xs font-bold transition-all"
-                        >
-                          OPEN IPFS
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </>
         )}
+
+        {/* Vault List — visible to everyone on landing page */}
+        <div className="bg-slate-900 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold flex items-center gap-3">
+              <span className="w-2 h-8 bg-cyan-500 rounded-full"></span>
+              Vault Contents
+            </h2>
+            <button 
+              onClick={loadFiles} 
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition-all border border-slate-700"
+            >
+              REFRESH
+            </button>
+          </div>
+          
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+              <p className="text-slate-500 font-medium tracking-widest text-xs uppercase">Reading Distributed Ledger...</p>
+            </div>
+          ) : files.length === 0 ? (
+            <div className="text-center py-20 bg-slate-800/20 rounded-3xl border-2 border-dashed border-slate-800">
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No assets found on this contract.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {files.map((file) => (
+                <div key={file.id} className="group bg-slate-800/30 hover:bg-slate-800/60 p-6 rounded-2xl border border-slate-800 hover:border-slate-600 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] bg-slate-700 text-slate-400 px-2 py-0.5 rounded font-mono font-bold">ID #{file.id}</span>
+                      <h3 className="text-lg font-bold text-white">{file.fileName}</h3>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-mono break-all leading-tight">
+                      CID: <span className="text-cyan-500/60">{file.cid}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-3 w-full md:w-auto">
+                    <a
+                      href={"https://gateway.pinata.cloud/ipfs/" + file.cid}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 md:flex-none text-center bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/50 px-6 py-2 rounded-xl text-xs font-bold transition-all"
+                    >
+                      OPEN IPFS
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
