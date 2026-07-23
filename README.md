@@ -1,6 +1,15 @@
-# Storage Forge
+# Storage Forge — Decentralized File Storage dApp 🛡️
 
-A decentralized file storage dApp that lets users upload files to IPFS (via Pinata) and mint an ERC-721 NFT representing ownership on the Ethereum Sepolia testnet.
+A full-stack Web3 application where users upload files to IPFS (via Pinata), mint them as ERC-721 NFTs on Sepolia, and browse all chain data through a The Graph subgraph — built with React + Vite + TailwindCSS.
+
+**What it does:**
+- 🔗 Forge files to IPFS + blockchain in one click
+- 👀 Landing page gallery showing all uploaded assets (from subgraph)
+- 🦊 MetaMask wallet integration
+- 📦 Smart contracts written in Solidity (Foundry)
+- ⚡ Real-time vault via The Graph
+
+**Stack:** Solidity · Foundry · Ethers.js · React · Vite · TailwindCSS · Pinata · The Graph · Vercel
 
 ## Architecture
 
@@ -85,3 +94,9 @@ npm run deploy
 ## IPFS Gateway
 
 Uploaded files are accessible at `https://gateway.pinata.cloud/ipfs/<CID>`.
+
+---
+
+Built during **BuildersAcademy** Cohort
+
+`#Web3` `#Blockchain` `#BuildersAcademy` `#Ethereum` `#IPFS` `#TheGraph` `#Solidity` `#React`
